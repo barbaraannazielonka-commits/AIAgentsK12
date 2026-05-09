@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Periodic Table of AI Agents K-12</title>
+  <meta name="description" content="A comprehensive framework of AI agents for K-12 education, organized by domain and maturity level." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-family: 'Inter', system-ui, sans-serif; font-size: 16px; }
+
+    /* ── Theme Variables ── */
+    html.dark {
+      --bg: #0a0a0a;
+      --bg-card: rgba(255,255,255,0.05);
+      --bg-card-hover: rgba(255,255,255,0.15);
+      --bg-sidebar: rgba(0,0,0,0.6);
+      --bg-panel: #18181b;
+      --border: rgba(255,255,255,0.1);
+      --border-panel: #27272a;
+      --text: #ffffff;
+      --text-muted: rgba(255,255,255,0.3);
+      --text-mid: rgba(255,255,255,0.6);
+      --text-label: rgba(255,255,255,0.4);
+      --scrollbar: #333;
+      --domain-header: rgba(255,255,255,0.4);
+      --selected-bg: rgba(255,255,255,0.2);
+      --selected-border: #ffffff;
+      --selected-ring: rgba(255,255,255,0.5);
+      --btn-toggle: rgba(255,255,255,0.05);
+    }
+    html.light {
+      --bg: #fafafa;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f3f4f6;
+      --bg-sidebar: #f9fafb;
+      --bg-panel: #ffffff;
+      --border: #e5e7eb;
+      --border-panel: #e5e7eb;
+      --text: #111827;
+      --text-muted: #9ca3af;
+      --text-mid: #6b7280;
+      --text-label: #6b7280;
+      --scrollbar: #d1d5db;
+      --domain-header: #6b7280;
+      --selected-bg: #e5e7eb;
+      --selected-border: #111827;
+      --selected-ring: rgba(17,24,39,0.5);
+      --btn-toggle: #e5e7eb;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      user-select: none;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 10px; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 290px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(24px);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem 1.5rem;
+      gap: 0;
+    }
+    @media (max-width: 1023px) { #sidebar { display: none; } }
+
+    .sidebar-toggles {
+      display: flex; gap: 0.5rem;
+      margin-bottom: 1.75rem;
+      flex-shrink: 0;
+    }
+    .btn-toggle {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 0.45rem 0.5rem;
+      border-radius: 0.5rem;
+      background: var(--btn-toggle);
+      color: var(--text-mid);
+      border: none; cursor: pointer;
+      font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em;
+      transition: color 0.2s, background 0.2s;
+      white-space: nowrap;
+    }
+    .btn-toggle:hover { color: var(--text); }
+    .btn-toggle.active-theme { color: var(--text); }
+
+    .sidebar-section-label {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.35em; color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+    .domain-filter-btn {
+      width: 100%;
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.35rem 0.5rem;
+      border-radius: 0.4rem;
+      background: transparent;
+      border: none; cursor: pointer;
+      font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-muted);
+      transition: all 0.2s;
+      text-align: left;
+      line-height: 1.2;
+    }
+    .domain-filter-btn:hover { background: var(--btn-toggle); color: var(--text); }
+    .domain-filter-btn.active { background: var(--btn-toggle); color: var(--text); }
+    .domain-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+    .domain-filter-btn .domain-name { flex: 1; line-height: 1.3; }
+
+    .clear-filter-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      color: #f97316; display: flex; align-items: center; gap: 0.25rem;
+      padding: 0; margin-top: 0.25rem;
+    }
+    .clear-filter-btn:hover { color: #fb923c; }
+
+    .maturity-item { margin-bottom: 0.85rem; padding-bottom: 0.85rem; border-bottom: 1px solid var(--border); }
+    .maturity-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .maturity-name {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--text); margin-bottom: 0.3rem;
+    }
+    .maturity-desc {
+      font-size: 10px; line-height: 1.55; color: var(--text-muted);
+    }
+
+    /* ── Main ── */
+    #main {
+      flex: 1; display: flex; flex-direction: column;
+      overflow: hidden; padding: 1.5rem 2rem;
+      position: relative;
+    }
+
+    /* Background glow */
+    #main::before {
+      content: ''; position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 1000px; height: 600px;
+      background: radial-gradient(ellipse, rgba(16,185,129,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    html.light #main::before {
+      background: radial-gradient(ellipse, rgba(16,185,129,0.08) 0%, transparent 70%);
+    }
+
+    /* Header */
+    #header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 1.5rem; flex-wrap: wrap; flex-shrink: 0;
+    }
+    h1 {
+      font-size: clamp(1.75rem, 3vw, 2.75rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      background: linear-gradient(to right, #34d399, #fbbf24, #d946ef);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Grid container */
+    #grid-wrap { flex: 1; overflow: auto; padding-bottom: 2rem; }
+    #grid-inner { min-width: 1600px; padding: 0 1rem; }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(15, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    /* Column */
+    .domain-col { display: flex; flex-direction: column; gap: 0.625rem; }
+    .domain-header {
+      height: 44px; display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 800; text-transform: uppercase;
+      text-align: center; line-height: 1.1; letter-spacing: 0.08em;
+      color: var(--domain-header);
+      cursor: default; transition: color 0.2s;
+      margin-bottom: 1rem;
+    }
+    .domain-col:hover .domain-header { color: var(--text); }
+
+    /* Agent Cell */
+    .agent-cell {
+      aspect-ratio: 1 / 1;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: flex-start; justify-content: space-between;
+      overflow: hidden; position: relative;
+      background: var(--bg-card);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.3s, background 0.2s, border-color 0.2s;
+      will-change: transform;
+    }
+    .agent-cell:hover {
+      transform: scale(1.15);
+      z-index: 30;
+      background: var(--bg-card-hover);
+    }
+    .agent-cell:active { transform: scale(0.92); }
+    .agent-cell.selected {
+      border-color: var(--selected-border);
+      background: var(--selected-bg);
+      box-shadow: 0 0 0 2px var(--selected-ring), 0 20px 40px rgba(0,0,0,0.3);
+      z-index: 40;
+    }
+    .agent-cell.blurred { opacity: 0.1; filter: grayscale(1) brightness(0.3); transform: scale(0.95); }
+    .agent-cell.core { background: #059669; border-color: #059669; }
+    .agent-cell.trust { background: #9333ea; border-color: #9333ea; }
+
+    .cell-bar {
+      position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+    }
+    .cell-pulse {
+      width: 6px; height: 6px; border-radius: 50%; background: white;
+      animation: pulse 2s infinite; align-self: flex-end;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .cell-bottom { display: flex; flex-direction: column; gap: 1px; width: 100%; }
+    .cell-symbol {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1rem; font-weight: 800; line-height: 1;
+      letter-spacing: -0.04em; color: var(--text);
+    }
+    .agent-cell.core .cell-symbol,
+    .agent-cell.trust .cell-symbol { color: white; }
+    .cell-name {
+      font-size: 7px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.03em; line-height: 1.2;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; color: var(--text);
+      transition: font-size 0.15s;
+    }
+    .agent-cell.core .cell-name,
+    .agent-cell.trust .cell-name { color: rgba(255,255,255,0.9); }
+    .agent-cell:hover .cell-name { font-size: 8px; }
+
+    /* ── Details Panel ── */
+    #overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 40;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #overlay.visible { opacity: 1; pointer-events: auto; }
+
+    #details-panel {
+      position: fixed; inset-y: 0; right: 0;
+      width: 100%; max-width: 450px;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-panel);
+      z-index: 50;
+      padding: 2rem;
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      box-shadow: -20px 0 60px rgba(0,0,0,0.3);
+    }
+    #details-panel.visible { transform: translateX(0); }
+
+    #close-btn {
+      position: absolute; top: 1.5rem; right: 1.5rem;
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-muted);
+      transition: background 0.2s, color 0.2s;
+    }
+    #close-btn:hover { background: var(--btn-toggle); color: var(--text); }
+
+    .panel-header { display: flex; align-items: flex-start; gap: 1.5rem; margin-bottom: 2.5rem; margin-top: 1rem; }
+    .panel-icon {
+      width: 64px; height: 64px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem; font-weight: 800;
+      border-radius: 12px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .panel-domain {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.2em; margin-bottom: 0.25rem;
+    }
+    .panel-name {
+      font-size: 1.4rem; font-weight: 900; line-height: 1.1;
+      color: var(--text);
+    }
+
+    .panel-body { overflow-y: auto; flex: 1; padding-right: 0.5rem; }
+    .panel-body::-webkit-scrollbar { display: none; }
+
+    .panel-section { margin-bottom: 2.5rem; }
+    .panel-section-label {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.3em; color: var(--text-muted);
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;
+    }
+    .panel-section-label svg { flex-shrink: 0; }
+
+    .panel-description {
+      font-size: 1.05rem; font-weight: 500; line-height: 1.6;
+      color: var(--text-mid);
+      font-style: italic;
+      border-left: 2px solid var(--border);
+      padding: 0.5rem 0 0.5rem 1.5rem;
+    }
+    .panel-outcome-box {
+      background: rgba(249,115,22,0.05);
+      border: 1px solid rgba(249,115,22,0.2);
+      border-radius: 12px; padding: 1.25rem;
+      position: relative; overflow: hidden;
+    }
+    html.light .panel-outcome-box {
+      background: #fff7ed; border-color: #fed7aa;
+    }
+    .panel-outcome-text {
+      font-size: 1.1rem; font-weight: 700;
+      color: #f97316; line-height: 1.3;
+    }
+    .panel-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+    .panel-meta-label {
+      font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.3em; color: var(--text-muted); margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .panel-maturity {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.3rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: -0.02em; color: var(--text);
+    }
+    .panel-locale {
+      font-size: 0.8rem; font-weight: 700; color: #3b82f6; line-height: 1.3;
+    }
+
+    /* ── Colors ── */
+    .c-emerald-500  { background-color: #10b981; }
+    .c-orange-500   { background-color: #f97316; }
+    .c-orange-700   { background-color: #c2410c; }
+    .c-amber-400    { background-color: #fbbf24; }
+    .c-magenta      { background-color: #d946ef; }
+    .c-red-500      { background-color: #ef4444; }
+    .c-rose-500     { background-color: #f43f5e; }
+    .c-teal-500     { background-color: #14b8a6; }
+    .c-yellow-500   { background-color: #eab308; }
+    .c-blue-600     { background-color: #2563eb; }
+    .c-emerald-600  { background-color: #059669; }
+    .c-indigo-500   { background-color: #6366f1; }
+    .c-cyan-600     { background-color: #0891b2; }
+    .c-lime-600     { background-color: #65a30d; }
+    .c-pink-500     { background-color: #ec4899; }
+    .c-red-700      { background-color: #b91c1c; }
+
+    /* text versions for panel domain label */
+    .t-emerald-500  { color: #10b981; }
+    .t-orange-500   { color: #f97316; }
+    .t-orange-700   { color: #c2410c; }
+    .t-amber-400    { color: #fbbf24; }
+    .t-magenta      { color: #d946ef; }
+    .t-red-500      { color: #ef4444; }
+    .t-rose-500     { color: #f43f5e; }
+    .t-teal-500     { color: #14b8a6; }
+    .t-yellow-500   { color: #eab308; }
+    .t-blue-600     { color: #2563eb; }
+    .t-emerald-600  { color: #059669; }
+    .t-indigo-500   { color: #6366f1; }
+    .t-cyan-600     { color: #0891b2; }
+    .t-lime-600     { color: #65a30d; }
+    .t-pink-500     { color: #ec4899; }
+    .t-red-700      { color: #b91c1c; }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+  <!-- Top toggles: language + theme -->
+  <div class="sidebar-toggles">
+    <button class="btn-toggle" id="lang-btn" onclick="toggleLang()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <span id="lang-label">NO</span>
+    </button>
+    <button class="btn-toggle" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode">
+      <svg id="theme-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <span id="theme-label">Dark</span>
+    </button>
+  </div>
+
+  <!-- Intelligence Domains -->
+  <div style="margin-bottom: 0.25rem;">
+    <div class="sidebar-section-label" data-i18n="intelligenceDomains">Intelligence Domains</div>
+    <div id="clear-filter-wrap" style="display:none; margin-bottom:0.25rem;">
+      <button class="clear-filter-btn" onclick="clearFilter()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <span data-i18n="clearFilters">Clear Filters</span>
+      </button>
+    </div>
+    <div id="domain-filters" style="margin-top:0.4rem;"></div>
+  </div>
+
+  <!-- Maturity Scale -->
+  <div style="border-top: 1px solid var(--border); margin-top: 1.25rem; padding-top: 1.25rem;">
+    <div class="sidebar-section-label" data-i18n="maturityScale">Maturity Scale</div>
+    <div id="maturity-legend" style="margin-top:0.5rem;"></div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main id="main">
+  <header id="header">
+    <h1 data-i18n="title">Periodic Table of AI Agents K-12</h1>
+  </header>
+
+  <div id="grid-wrap" class="no-scrollbar">
+    <div id="grid-inner">
+      <div id="grid"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Overlay + Details Panel -->
+<div id="overlay" onclick="closePanel()"></div>
+<div id="details-panel" role="dialog" aria-modal="true">
+  <button id="close-btn" onclick="closePanel()" aria-label="Close">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="panel-header">
+    <div class="panel-icon" id="panel-icon"></div>
+    <div>
+      <div class="panel-domain" id="panel-domain"></div>
+      <div class="panel-name" id="panel-name"></div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="panel-section">
+      <div class="panel-section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span data-i18n="description">Description</span>
+      </div>
+      <p class="panel-description" id="panel-description"></p>
+    </div>
+    <div class="panel-section">
+      <div class="panel-section-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" color="#f97316"><polyline points="9 18 15 12 9 6"/></svg>
+        <span data-i18n="outcome">Primary Outcome</span>
+      </div>
+      <div class="panel-outcome-box">
+        <div class="panel-outcome-text" id="panel-outcome"></div>
+      </div>
+    </div>
+    <div class="panel-meta">
+      <div>
+        <div class="panel-meta-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span data-i18n="maturity">Maturity</span>
+        </div>
+        <div class="panel-maturity" id="panel-maturity"></div>
+      </div>
+      <div id="panel-locale-wrap" style="display:none;">
+        <div class="panel-meta-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span data-i18n="locale">Locale</span>
+        </div>
+        <div class="panel-locale" id="panel-locale"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const MATURITY_LEVELS = ['Advisory','Operational','Process','Strategic','School-wide','Independent'];
+
+const DOMAINS = [
+  { id:'admin',   name:{en:'Leadership and Administration',      no:'Ledelse og Administrasjon',           pl:'Przywództwo i Administracja'},       color:'c-emerald-500', description:{en:'High-level school management and policy.',          no:'Overordnet skoleledelse og politikk.',                pl:'Zarządzanie szkołą i polityka.'} },
+  { id:'curr',    name:{en:'Curriculum and Teaching',            no:'Læreplan og Undervisning',             pl:'Program nauczania i Dydaktyka'},      color:'c-orange-500',  description:{en:'Lesson planning and instructional delivery.',        no:'Leksjonsplanlegging og undervisning.',                 pl:'Planowanie lekcji i realizacja programu.'} },
+  { id:'assess',  name:{en:'Assessment and Progress',            no:'Vurdering og Fremgang',                pl:'Ocenianie i Postępy'},                color:'c-orange-700',  description:{en:'Student evaluation and progress tracking.',          no:'Elevvurdering og oppfølging av fremgang.',             pl:'Ewaluacja uczniów i śledzenie postępów.'} },
+  { id:'well',    name:{en:'Student Support and Wellbeing',      no:'Elevstøtte og Trivsel',                pl:'Wsparcie Ucznia i Dobrostan'},        color:'c-amber-400',   description:{en:'Pastoral care and mental health.',                   no:'Elevomsorg og psykisk helse.',                        pl:'Opieka duszpasterska i zdrowie psychiczne.'} },
+  { id:'send',    name:{en:'Special Educational Needs and Inclusion', no:'Spesialpedagogikk og Inkludering', pl:'Specjalne Potrzeby Edukacyjne'},   color:'c-magenta',     description:{en:'Support for SEN and inclusive practice.',            no:'Støtte for spesialpedagogiske behov og inkludering.',  pl:'Wsparcie dla SPE i praktyki inkluzywnej.'} },
+  { id:'att',     name:{en:'Attendance and Behaviour',           no:'Fremmøte og Atferd',                   pl:'Frekwencja i Zachowanie'},           color:'c-red-500',     description:{en:'Monitoring presence and conduct.',                   no:'Overvåking av tilstedeværelse og oppførsel.',         pl:'Monitorowanie obecności i zachowania.'} },
+  { id:'career',  name:{en:'Careers and Guidance',              no:'Karriere og Veiledning',               pl:'Kariera i Doradztwo'},               color:'c-rose-500',    description:{en:'Post-school pathways and advice.',                   no:'Veier videre etter skolen og rådgivning.',            pl:'Ścieżki po szkole i doradztwo zawodowe.'} },
+  { id:'ops',     name:{en:'Timetabling and Operations',        no:'Timeplanlegging og Drift',             pl:'Planowanie i Operacje'},             color:'c-teal-500',    description:{en:'Logistical systems and cover.',                      no:'Logistikk og timeplanlegging.',                       pl:'Systemy logistyczne i zastępstwa.'} },
+  { id:'lib',     name:{en:'Library and Learning Resources',    no:'Bibliotek og Læringsressurser',        pl:'Biblioteka i Zasoby Edukacyjne'},    color:'c-yellow-500',  description:{en:'Research support and reading.',                      no:'Forskningsstøtte og lesing.',                         pl:'Wsparcie badań i czytelnictwa.'} },
+  { id:'parent',  name:{en:'Parent and Home Communication',     no:'Foreldre og Hjemkommunikasjon',        pl:'Komunikacja z Rodzicami'},           color:'c-blue-600',    description:{en:'School-home partnerships.',                          no:'Samarbeid mellom skole og hjem.',                     pl:'Partnerstwo szkoła-dom.'} },
+  { id:'hr',      name:{en:'Staff Development and HR',          no:'Personalutvikling og HR',              pl:'Rozwój Pracowników i Kadry'},        color:'c-emerald-600', description:{en:'Teacher growth and recruitment.',                    no:'Lærerutvikling og rekruttering.',                     pl:'Rozwój nauczycieli i rekrutacja.'} },
+  { id:'ict',     name:{en:'ICT and Digital Learning',          no:'IKT og Digital Læring',                pl:'TIK i Cyfrowa Nauka'},               color:'c-indigo-500',  description:{en:'Infrastructure and digital tools.',                  no:'Infrastruktur og digitale verktøy.',                  pl:'Infrastruktura i narzędzia technologiczne.'} },
+  { id:'fin',     name:{en:'Finance and Procurement',           no:'Økonomi og Innkjøp',                   pl:'Finanse i Zamówienia'},              color:'c-cyan-600',    description:{en:'Budgeting and buying.',                              no:'Budsjett og innkjøp.',                                pl:'Budżetowanie i zakupy.'} },
+  { id:'safe',    name:{en:'Facilities and Safety',             no:'Fasiliteter og Sikkerhet',             pl:'Obiekty i Bezpieczeństwo'},          color:'c-lime-600',    description:{en:'Estate management and maintenance.',                 no:'Forvaltning og vedlikehold av eiendom.',              pl:'Zarządzanie nieruchomościami i konserwacja.'} },
+  { id:'partner', name:{en:'Partnerships and Community',        no:'Partnerskap og Samfunn',               pl:'Partnerstwa i Społeczność'},         color:'c-pink-500',    description:{en:'Local and global connections.',                      no:'Lokale og globale relasjoner.',                       pl:'Połączenia lokalne i globalne.'} }
+];
+
+const AGENTS = [
+  // Leadership and Administration
+  {id:'admin-1',symbol:'Ad',name:{en:'Board Briefing Synthesizer',no:'Styrereferat-syntese',pl:'Syntezator Briefingów Zarządu'},domainId:'admin',maturity:'Advisory',description:{en:'Summarizes policy changes, meeting notes, and KPI trends into a one-page leadership briefing.',no:'Oppsummerer endringer, møtenotater og KPI-trender i ett referat for ledelsen.',pl:'Podsumowuje zmiany w polityce, notatki z zebrań i trendy KPI w jednostronicowy briefing dla liderów.'},outcome:{en:'Condensed leadership insights.',no:'Kortfattet innsikt for ledelsen.',pl:'Skondensowane spostrzeżenia dla liderów.'}},
+  {id:'admin-2',symbol:'Ap',name:{en:'Calendar and Agenda Prep Agent',no:'Kalender- og agendaprepp',pl:'Agent Przygotowania Kalendarza i Agendy'},domainId:'admin',maturity:'Operational',description:{en:'Builds agendas, sends reminders, and collects pre-reading for leadership meetings.',no:'Lager agendaer, sender påminnelser og samler forhåndslesing til ledermøter.',pl:'Tworzy agendy, wysyła przypomnienia i zbiera materiały do czytania przed spotkaniami liderów.'},outcome:{en:'Automated meeting prep.',no:'Automatisert møteforberedelse.',pl:'Zautomatyzowane przygotowanie spotkań.'}},
+  {id:'admin-3',symbol:'At',name:{en:'Action-Tracker Agent',no:'Handlingsoppfølger',pl:'Agent Śledzenia Działań'},domainId:'admin',maturity:'Process',description:{en:'Turns meeting minutes into task lists, assigns owners, and chases overdue actions.',no:'Gjør møtereferater til oppgavelister, tildeler ansvarlige og følger opp frister.',pl:'Przekształca protokoły ze spotkań w listy zadań, dedykuje właścicieli i śledzi zaległe działania.'},outcome:{en:'Consistent task accountability.',no:'Konsekvent oppgaveoppfølging.',pl:'Spójna odpowiedzialność za zadania.'}},
+  {id:'admin-4',symbol:'As',name:{en:'Scenario Comparison Agent',no:'Scenariosammenligning',pl:'Agent Porównywania Scenariuszy'},domainId:'admin',maturity:'Strategic',description:{en:'Compares options for staffing, scheduling, or policy choices and highlights trade-offs.',no:'Sammenligner valg for bemanning, timeplan eller politikk og viser fordeler/ulemper.',pl:'Porównuje opcje kadrowe, harmonogramy lub wybory polityczne i podkreśla kompromisy.'},outcome:{en:'Data-informed policy choices.',no:'Databaserte politikkvalg.',pl:'Wybory polityczne oparte na danych.'}},
+  {id:'admin-5',symbol:'Ab',name:{en:'Trust Dashboard Agent',no:'Dashboard for skoleeiere',pl:'Agent Pulpitu Zaufania'},domainId:'admin',maturity:'School-wide',description:{en:'Aggregates patterns across schools in a group and flags where support or intervention is needed.',no:'Aggregerer mønstre på tvers av skoler og flagger behov for støtte.',pl:'Agreguje wzorce w grupie szkół i sygnalizuje, gdzie potrzebne jest wsparcie lub interwencja.'},outcome:{en:'Multi-school oversight.',no:'Oversikt over flere skoler samtidig.',pl:'Nadzór nad wieloma szkołami.'}},
+  {id:'admin-6',symbol:'Aa',name:{en:'Executive Assistant Agent',no:'Ledelsesassistent',pl:'Agent Asystent Wykonawczy'},domainId:'admin',maturity:'Independent',description:{en:'Monitors incoming requests, drafts replies, prepares papers, and escalates only the most sensitive items.',no:'Overvåker henvendelser, skriver svarutkast og eskalerer kun sensitive saker.',pl:'Monitoruje przychodzące wnioski, przygotowuje szkice odpowiedzi, sporządza dokumenty i eskaluje tylko najdelikatniejsze sprawy.'},outcome:{en:'Optimized leadership bandwidth.',no:'Frigjort tid for ledelsen.',pl:'Zoptymalizowana wydajność liderów.'}},
+  // Curriculum and Teaching
+  {id:'curr-1',symbol:'Ef',name:{en:'Lesson Evidence Finder',no:'Leksjonsbevis-finner',pl:'Wyszukiwarka Dowodów Lekcyjnych'},domainId:'curr',maturity:'Advisory',description:{en:'Pulls examples, explanations, and subject knowledge from approved sources for teachers.',no:'Henter eksempler og forklaringer fra godkjente kilder for lærere.',pl:'Pobiera przykłady, wyjaśnienia i wiedzę przedmiotową z zatwierdzonych źródeł dla nauczycieli.'},outcome:{en:'Validated subject resources.',no:'Validerte fagsessurser.',pl:'Zatwierdzone zasoby przedmiotowe.'}},
+  {id:'curr-2',symbol:'Rb',name:{en:'Resource Builder Agent',no:'Ressursbygger',pl:'Agent Budowania Zasobów'},domainId:'curr',maturity:'Operational',description:{en:'Creates worksheets, quizzes, examples, and printable lesson materials from teacher prompts.',no:'Lager arbeidsark, quizer og eksempler ut fra lærerens instruksjoner.',pl:'Tworzy arkusze pracy, quizy, przykłady i materiały do druku na podstawie poleceń nauczyciela.'},outcome:{en:'Instant lesson materials.',no:'Umiddelbart undervisningsmateriell.',pl:'Błyskawiczne materiały lekcyjne.'}},
+  {id:'curr-3',symbol:'Dp',name:{en:'Differentiation Planner',no:'Differensieringsplanlegger',pl:'Planista Różnicowania'},domainId:'curr',maturity:'Process',description:{en:'Produces three versions of the same task for different ability levels and learning needs.',no:'Lager tre versjoner av samme oppgave for ulike nivåer og behov.',pl:'Przygotowuje trzy wersje tego samego zadania dla różnych poziomów umiejętności i potrzeb edukacyjnych.'},outcome:{en:'Accessible learning for all.',no:'Tilgjengelig læring for alle.',pl:'Dostępna nauka dla wszystkich.'}},
+  {id:'curr-4',symbol:'Ic',name:{en:'Instructional Coach Agent',no:'Veileder for undervisning',pl:'Agent Trener Instruktażowy'},domainId:'curr',maturity:'Strategic',description:{en:'Recommends which teaching strategy to use based on topic, class profile, and prior results.',no:'Anbefaler undervisningsstrategier basert på tema og klasseprofil.',pl:'Rekomenduje strategie nauczania w oparciu o temat, profil klasy i wcześniejsze wyniki.'},outcome:{en:'Evidence-based pedagogy.',no:'Forskningsbasert pedagogikk.',pl:'Pedagogika oparta na dowodach.'}},
+  {id:'curr-5',symbol:'Cs',name:{en:'Curriculum Sharing Agent',no:'Delingsagent for læreplan',pl:'Agent Udostępniania Programu'},domainId:'curr',maturity:'School-wide',description:{en:'Finds strong lessons, units, and resources from across a school network and adapts them for local use.',no:'Finner gode opplegg fra nettverket og tilpasser dem lokalt.',pl:'Znajduje wartościowe lekcje, jednostki i zasoby w sieci szkół i dostosowuje je do lokalnego użytku.'},outcome:{en:'Scaled educational excellence.',no:'Spredning av pedagogisk kvalitet.',pl:'Skalowana doskonałość edukacyjna.'}},
+  {id:'curr-6',symbol:'Ls',name:{en:'Lesson Sequence Agent',no:'Leksjonssekvens-agent',pl:'Agent Sekwencji Lekcji'},domainId:'curr',maturity:'Independent',description:{en:'Drafts a full lesson sequence with starter, main task, checking questions, and exit ticket.',no:'Utformer en hel undervisningsøkt med start, hoveddel og oppsummering.',pl:'Opracowuje pełną sekwencję lekcji z wprowadzeniem, zadaniem głównym, pytaniami sprawdzającymi i podsumowaniem.'},outcome:{en:'Full-session autonomy.',no:'Komplett undervisningsplanlegging.',pl:'Pełna autonomia sesji.'}},
+  // Assessment
+  {id:'assess-1',symbol:'As',name:{en:'Assessment Summary Agent',no:'Vurderingssammendrag',pl:'Agent Podsumowania Ocen'},domainId:'assess',maturity:'Advisory',description:{en:'Turns marks, rubric scores, and comments into a clear class summary of strengths and gaps.',no:'Gjør karakterer og kommentarer om til et klart sammendrag av styrker og hull.',pl:'Przekształca stopnie, wyniki rubryk i komentarze w jasne podsumowanie mocnych stron i luk klasy.'},outcome:{en:'Holistic class profile.',no:'Helhetlig klasseprofil.',pl:'Holistyczny profil klasy.'}},
+  {id:'assess-2',symbol:'Fd',name:{en:'Feedback Drafting Agent',no:'Tilbakemeldingsagent',pl:'Agent Przygotowywania Informacji Zwrotnej'},domainId:'assess',maturity:'Operational',description:{en:'Writes short, student-friendly feedback comments based on teacher notes and mark schemes.',no:'Skriver elevvennlige tilbakemeldinger basert på lærerens notater.',pl:'Tworzy krótkie, przyjazne dla ucznia komentarze zwrotne na podstawie notatek nauczyciela i schematów oceniania.'},outcome:{en:'Consistent student feedback.',no:'Konsekvente elevtilbakemeldinger.',pl:'Spójna informacja zwrotna dla uczniów.'}},
+  {id:'assess-3',symbol:'Mm',name:{en:'Misconception Mapper',no:'Misforståelseskartlegger',pl:'Mapownik Błędnych Przekonań'},domainId:'assess',maturity:'Process',description:{en:'Groups assessment errors by common misconception and suggests follow-up activities.',no:'Grupperer feil etter vanlige misforståelser og foreslår aktivitet.',pl:'Grupuje błędy w ocenianiu według powszechnych błędnych przekonań i sugeruje zajęcia uzupełniające.'},outcome:{en:'Targeted reteaching.',no:'Målrettet repetisjon.',pl:'Ukierunkowane ponowne nauczanie.'}},
+  {id:'assess-4',symbol:'Ir',name:{en:'Intervention Recommendation Agent',no:'Tiltaksanbefaling',pl:'Agent Rekomendacji Interwencji'},domainId:'assess',maturity:'Strategic',description:{en:'Suggests whether a student needs reteaching, practice, enrichment, or referral.',no:'Foreslår om en elev trenger repetisjon, berikelse eller henvisning.',pl:'Sugeruje, czy uczeń potrzebuje ponownego nauczania, praktyki, wzbogacenia czy skierowania do specjalisty.'},outcome:{en:'Optimized student support.',no:'Optimalisert elevstøtte.',pl:'Zoptymalizowane wsparcie ucznia.'}},
+  {id:'assess-5',symbol:'Pp',name:{en:'Progress Pattern Agent',no:'Fremgangsmønster-agent',pl:'Agent Wzorców Postępu'},domainId:'assess',maturity:'School-wide',description:{en:'Compares progress trends across classes, subjects, or year groups to spot wider issues.',no:'Sammenligner trender på tvers av klasser og fag for å finne utfordringer.',pl:'Porównuje trendy postępu w różnych klasach, przedmiotach lub grupach rocznikowych, aby dostrzec szersze problemy.'},outcome:{en:'Strategic progress insight.',no:'Strategisk innsikt i fremgang.',pl:'Strategiczny wgląd w postępy.'}},
+  {id:'assess-6',symbol:'Ac',name:{en:'Assessment Cycle Agent',no:'Vurderingssyklus-agent',pl:'Agent Cyklu Oceniania'},domainId:'assess',maturity:'Independent',description:{en:'Prepares assessment calendars, drafts marking plans, and generates progress summaries for review.',no:'Forbereder vuderingsplaner og genererer sammendrag for gjennomgang.',pl:'Przygotowuje kalendarze oceniania, opracowuje plany oceniania i generuje podsumowania postępów do przeglądu.'},outcome:{en:'Reliable progress engine.',no:'Pålitelig motor for fremgang.',pl:'Niezawodny silnik postępu.'}},
+  // Wellbeing
+  {id:'well-1',symbol:'Wc',name:{en:'Wellbeing Check-In Agent',no:'Velvære-sjekk',pl:'Agent Kontroli Dobrostanu'},domainId:'well',maturity:'Advisory',description:{en:'Summarizes attendance, behaviour, and wellbeing notes into a student support snapshot.',no:'Oppsummerer fravær og trivselsnotater til et øyeblikksbilde.',pl:'Podsumowuje frekwencję, zachowanie i notatki o dobrostanie w migawkowym wsparciu ucznia.'},outcome:{en:'Rapid pastoral context.',no:'Rask pastoral oversikt.',pl:'Szybki kontekst opiekuńczy.'}},
+  {id:'well-2',symbol:'Cm',name:{en:'Check-In Message Agent',no:'Oppfølgingsmelding',pl:'Agent Wiadomości Kontrolnych'},domainId:'well',maturity:'Operational',description:{en:'Drafts sensitive, supportive messages for pastoral staff to send to students or families.',no:'Skriver støttende meldinger som ansatte kan sende hjem.',pl:'Przygotowuje delikatne, wspierające wiadomości dla personelu opiekuńczego do wysłania uczniom lub rodzinom.'},outcome:{en:'Strengthened school-home bond.',no:'Styrket bånd mellom skole og hjem.',pl:'Wzmocniona więź szkoła-dom.'}},
+  {id:'well-3',symbol:'Sp',name:{en:'Support Plan Agent',no:'Støtteplan-agent',pl:'Agent Planu Wsparcia'},domainId:'well',maturity:'Process',description:{en:'Creates structured support plans with goals, review dates, and responsible adults.',no:'Lager strukturerte planer med mål, datoer og ansvarlige.',pl:'Tworzy ustrukturyzowane plany wsparcia z celami, datami przeglądów i odpowiedzialnymi dorosłymi.'},outcome:{en:'Accountable student care.',no:'Ansvarlig elevomsorg.',pl:'Odpowiedzialna opieka nad uczniem.'}},
+  {id:'well-4',symbol:'Tr',name:{en:'Triage and Referral Agent',no:'Vurdering og henvisning',pl:'Agent Triażu i Skierowań'},domainId:'well',maturity:'Strategic',description:{en:'Suggests whether a concern should go to tutor, head of year, counsellor, or external service.',no:'Foreslår om en bekymring bør sendes til rådgiver eller ekstern tjeneste.',pl:'Sugeruje, czy problem powinien trafić do wychowawcy, pedagoga czy serwisu zewnętrznego.'},outcome:{en:'Consistent support routing.',no:'Konsekvent ruting av støtte.',pl:'Spójne kierowanie wsparciem.'}},
+  {id:'well-5',symbol:'Wt',name:{en:'Wellbeing Trend Agent',no:'Veltværetrend-agent',pl:'Agent Trendów Dobrostanu'},domainId:'well',maturity:'School-wide',description:{en:'Highlights recurring wellbeing concerns across a year group or school network.',no:'Viser gjentakende trivselsbekymringer på tvers av en årgang.',pl:'Wyróżnia powtarzające się problemy z dobrostanem w grupie rocznikowej lub sieci szkół.'},outcome:{en:'Network-wide wellbeing map.',no:'Kart over trivsel i hele nettverket.',pl:'Ogólnosieciowa mapa dobrostanu.'}},
+  {id:'well-6',symbol:'Pf',name:{en:'Pastoral Follow-Up Agent',no:'Pastoral oppfølging',pl:'Agent Kontynuacji Opieki'},domainId:'well',maturity:'Independent',description:{en:'Monitors agreed support actions, reminds staff of reviews, and flags missed steps.',no:'Overvåker avtalte tiltak og påminner ansatte om vurderinger.',pl:'Monitoruje uzgodnione działania wspierające, przypomina personelowi o przeglądach i sygnalizuje pominięte kroki.'},outcome:{en:'Closing the care loop.',no:'Fullstendig oppfølgingssløyfe.',pl:'Domknięcie pętli opieki.'}},
+  // SEND
+  {id:'send-1',symbol:'Af',name:{en:'Accommodation Finder',no:'Tilretteleggingsfinner',pl:'Wyszukiwarka Udogodnień'},domainId:'send',maturity:'Advisory',description:{en:'Identifies suitable adjustments based on the learner profile and task demands.',no:'Finner passende tilpasninger basert på elevens profil.',pl:'Identyfikuje odpowiednie dostosowania na podstawie profilu ucznia i wymagań zadania.'},outcome:{en:'Immediate support ideas.',no:'Umiddelbare ideer til støtte.',pl:'Natychmiastowe pomysły na wsparcie.'}},
+  {id:'send-2',symbol:'Ar',name:{en:'Accessible Text Rewriter',no:'Tilgjengelig tekstomskriver',pl:'Przepisywacz Tekstów Dostępnych'},domainId:'send',maturity:'Operational',description:{en:'Rewrites materials into simpler language, larger chunks, or alternative formats.',no:'Skriver materiell om til enklere språk eller alternative formater.',pl:'Przepisuje materiały na prostszy język, większe fragmenty lub alternatywne formaty.'},outcome:{en:'Reduced learning barriers.',no:'Reduserte læringsbarrierer.',pl:'Zmniejszone bariery w nauce.'}},
+  {id:'send-3',symbol:'Sb',name:{en:'Support Plan Builder',no:'Planbygger for støtte',pl:'Budowniczy Planów Wsparcia'},domainId:'send',maturity:'Process',description:{en:'Drafts individual support plans, strategies, and classroom adjustments.',no:'Utformer individuelle planer og strategier for klasserommet.',pl:'Opracowuje indywidualne plany wsparcia, strategie i dostosowania klasowe.'},outcome:{en:'Legally compliant support.',no:'Forskriftsmessig støtte.',pl:'Wsparcie zgodne z przepisami.'}},
+  {id:'send-4',symbol:'Is',name:{en:'Inclusive Strategy Advisor',no:'Inkluderingsrådgiver',pl:'Doradca ds. Strategii Inkluzywnej'},domainId:'send',maturity:'Strategic',description:{en:'Recommends the best scaffold, accommodation, or intervention for a learner need.',no:'Anbefaler beste tiltak for elevens spesifikke behov.',pl:'Rekomenduje najlepsze rusztowanie, udogodnienie lub interwencję dla potrzeb ucznia.'},outcome:{en:'Expert inclusive practice.',no:'Ekspertise på inkludering.',pl:'Ekspercka praktyka inkluzywna.'}},
+  {id:'send-5',symbol:'Ip',name:{en:'Inclusion Practice Share Agent',no:'Deling av inkluderende praksis',pl:'Agent Udostępniania Praktyk Inkluzywnych'},domainId:'send',maturity:'School-wide',description:{en:'Finds effective adaptations used in other classes or schools and packages them for staff.',no:'Finner gode tilpasninger fra andre og pakker dem for ansatte.',pl:'Znajduje skuteczne adaptacje stosowane w innych klasach lub szkołach i udostępnia je personelowi.'},outcome:{en:'Networked SEN expertise.',no:'Nettverksbasert SEN-ekspertise.',pl:'Sieciowa ekspertyza SPE.'}},
+  {id:'send-6',symbol:'As',name:{en:'Access Support Agent',no:'Tilgangsstøtte-agent',pl:'Agent Wspierania Dostępu'},domainId:'send',maturity:'Independent',description:{en:'Generates accessible versions of resources, checks clarity, and routes difficult cases to staff.',no:'Lager tilgjengelige versjoner av ressurser og ruter saker videre.',pl:'Generuje dostępne wersje zasobów, sprawdza przejrzystość i kieruje trudne przypadki do personelu.'},outcome:{en:'Always-on SEN assistant.',no:'Døgnåpen assistent for inkludering.',pl:'Stale dostępny asystent SPE.'}},
+  // Attendance
+  {id:'att-1',symbol:'Ps',name:{en:'Pattern Spotter Agent',no:'Mønstergjenkjenner',pl:'Agent Wykrywania Wzorców'},domainId:'att',maturity:'Advisory',description:{en:'Shows which students, lessons, or days have recurring attendance or behaviour issues.',no:'Viser hvilke elever eller dager som har gjentakende fravær.',pl:'Pokazuje, którzy uczniowie, lekcje lub dni mają nawracające problemy z frekwencją lub zachowaniem.'},outcome:{en:'Early warning indicators.',no:'Tidlige varselsignaler.',pl:'Wskaźniki wczesnego ostrzegania.'}},
+  {id:'att-2',symbol:'Pc',name:{en:'Parent Contact Draft Agent',no:'Foreldrekontakt-utkast',pl:'Agent Szkicowania Kontaktu z Rodzicami'},domainId:'att',maturity:'Operational',description:{en:'Writes respectful messages about lateness, absence, or behaviour incidents.',no:'Skriver respektfulle meldinger om forsentkomming eller fravær.',pl:'Tworzy pełne szacunku wiadomości o spóźnieniach, nieobecnościach lub incydentach związanych z zachowaniem.'},outcome:{en:'Professional family outreach.',no:'Profesjonell kontakt med hjemmet.',pl:'Profesjonalne docieranie do rodzin.'}},
+  {id:'att-3',symbol:'Fs',name:{en:'Follow-Up Scheduler',no:'Oppfølgingsplanlegger',pl:'Planista Działań Uzupełniających'},domainId:'att',maturity:'Process',description:{en:'Sets review dates, reminders, and escalation steps after an incident or absence.',no:'Setter datoer og trinn for oppfølging etter hendelser.',pl:'Ustala daty przeglądów, przypomnienia i kroki eskalacji po incydencie lub nieobecności.'},outcome:{en:'Locked-in incident response.',no:'Sikret respons på hendelser.',pl:'Zablokowana reakcja na incydenty.'}},
+  {id:'att-4',symbol:'Ic',name:{en:'Intervention Choice Agent',no:'Tiltaksvelger',pl:'Agent Wyboru Interwencji'},domainId:'att',maturity:'Strategic',description:{en:'Recommends whether the next step should be tutor support, meeting, sanction, or referral.',no:'Anbefaler neste trinn i oppfølgingskjeden.',pl:'Rekomenduje, czy następnym krokiem powinno być wsparcie wychowawcy, spotkanie, sankcja czy skierowanie.'},outcome:{en:'Objective escalation paths.',no:'Objektive eskaleringsveier.',pl:'Obiektywne ścieżki eskalacji.'}},
+  {id:'att-5',symbol:'Ab',name:{en:'Attendance Benchmark Agent',no:'Fraværssammenligning',pl:'Agent Benchmarkingu Frekwencji'},domainId:'att',maturity:'School-wide',description:{en:'Compares attendance patterns across groups or schools to spot wider trends.',no:'Sammenligner fraværsmønstre mot andre grupper.',pl:'Porównuje wzorce frekwencji w różnych grupach lub szkołach, aby dostrzec szersze trendy.'},outcome:{en:'Strategic attendance map.',no:'Strategisk fraværskart.',pl:'Strategiczna mapa frekwencji.'}},
+  {id:'att-6',symbol:'Bm',name:{en:'Behaviour Monitoring Agent',no:'Atferdsovervåking',pl:'Agent Monitorowania Zachowania'},domainId:'att',maturity:'Independent',description:{en:'Watches live incident logs, identifies escalation risk, and alerts staff when thresholds are crossed.',no:'Følger med på logger og varsler ansatte ved risiko.',pl:'Obserwuje logi incydentów na żywo, identyfikuje ryzyko eskalacji i alarmuje personel po przekroczeniu progów.'},outcome:{en:'Real-time safety guard.',no:'Sikkerhetsvakt i sanntid.',pl:'Strażnik bezpieczeństwa w czasie rzeczywistym.'}},
+  // Careers
+  {id:'career-1',symbol:'Pe',name:{en:'Pathway Explorer',no:'Vegvalg-utforsker',pl:'Eksplorator Ścieżek'},domainId:'career',maturity:'Advisory',description:{en:'Explains study routes, job families, apprenticeships, and local labour-market options.',no:'Forklarer studieveier, lærlingplasser og arbeidsmarkedet.',pl:'Wyjaśnia ścieżki studiów, grupy zawodów, staże i lokalne opcje rynku pracy.'},outcome:{en:'Literate career guidance.',no:'Forståelig karriereveiledning.',pl:'Zrozumiałe doradztwo zawodowe.'}},
+  {id:'career-2',symbol:'Cc',name:{en:'CV and Application Coach',no:'CV- og søknadscoach',pl:'Trener CV i Aplikacji'},domainId:'career',maturity:'Operational',description:{en:'Improves CVs, personal statements, and application drafts.',no:'Forbedrer CVer og søknadsutkast.',pl:'Ulepsza CV, listy motywacyjne i szkice aplikacji.'},outcome:{en:'High-quality student branding.',no:'Høy kvalitet på elevenes søknader.',pl:'Wysokiej jakości wizerunek ucznia.'}},
+  {id:'career-3',symbol:'Gs',name:{en:'Guidance Session Planner',no:'Veiledningsplanlegger',pl:'Planista Sesji Doradztwa'},domainId:'career',maturity:'Process',description:{en:'Prepares meeting notes, action points, and next-step tasks for guidance meetings.',no:'Forbereder notater og tiltak til veiledningsmøter.',pl:'Przygotowuje notatki ze spotkań, punkty działania i zadania kontrolne dla spotkań doradczych.'},outcome:{en:'Enhanced advisor impact.',no:'Bedre effekt av rådgivning.',pl:'Zwiększony wpływ doradcy.'}},
+  {id:'career-4',symbol:'Pm',name:{en:'Pathway Match Advisor',no:'Match-rådgiver for studievalg',pl:'Doradca ds. Dopasowania Ścieżek'},domainId:'career',maturity:'Strategic',description:{en:'Suggests courses or routes based on interests, grades, and aspirations.',no:'Foreslår kurs basert på interesser og karakterer.',pl:'Sugeruje kursy lub ścieżki w oparciu o zainteresowania, oceny i aspiracje.'},outcome:{en:'Personalized study matches.',no:'Personlig tilpassede studievalg.',pl:'Spersonalizowane dopasowania studiów.'}},
+  {id:'career-5',symbol:'Of',name:{en:'Opportunity Finder',no:'Mulighetsfinner',pl:'Wyszukiwarka Możliwości'},domainId:'career',maturity:'School-wide',description:{en:'Shares internships, visits, open days, and employer links across a school network.',no:'Deler lærlingplasser og besøksdager i nettverket.',pl:'Udostępnia informacje o stażach, wizytach, dniach otwartych i kontaktach z pracodawcami w sieci szkół.'},outcome:{en:'Ecosystem of opportunities.',no:'Et økosystem av muligheter.',pl:'Ekosystem możliwości.'}},
+  {id:'career-6',symbol:'Cp',name:{en:'Career Planning Agent',no:'Karriereplan-agent',pl:'Agent Planowania Kariery'},domainId:'career',maturity:'Independent',description:{en:'Builds a term-by-term pathway plan with deadlines, reminders, and progress checks.',no:'Lager en plan for karrierevalg med påminnelser.',pl:'Tworzy plan ścieżki semestr po semestrze z terminami, przypomnieniami i kontrolą postępów.'},outcome:{en:'Consistent career progress.',no:'Jevn fremgang i karriereplanlegging.',pl:'Stały postęp w karierze.'}},
+  // Ops
+  {id:'ops-1',symbol:'Tg',name:{en:'Timetable Gap Reporter',no:'Rapportør for timeplanhull',pl:'Raportujący Luki w Harmonogramie'},domainId:'ops',maturity:'Advisory',description:{en:'Shows clashes, free periods, room shortages, and staffing pinch points.',no:'Viser kollisjoner, mangel på rom og bemanningsutfordringer.',pl:'Pokazuje kolizje, wolne okresy, braki sal i wąskie gardła kadrowe.'},outcome:{en:'Frictionless operations visibility.',no:'Oversikt over driftsutfordringer.',pl:'Widoczność operacji bez zakłóceń.'}},
+  {id:'ops-2',symbol:'Ca',name:{en:'Cover Allocation Agent',no:'Vikartildelingsagent',pl:'Agent Przydziału Zastępstw'},domainId:'ops',maturity:'Operational',description:{en:'Drafts cover plans and suggests available staff for absences.',no:'Lager vikarplaner og foreslår tilgjengelige ansatte.',pl:'Przygotowuje plany zastępstw i sugeruje dostępny personel w razie nieobecności.'},outcome:{en:'Instant daily continuity.',no:'Kontinuitet i skolehverdagen.',pl:'Natychmiastowa ciągłość dzienna.'}},
+  {id:'ops-3',symbol:'Rp',name:{en:'Rooming and Movement Planner',no:'Planlegger for rom og flyt',pl:'Planista Sal i Ruchu'},domainId:'ops',maturity:'Process',description:{en:'Coordinates rooms, class moves, and supervision points across the day.',no:'Koordinerer rom og inspeksjon gjennom dagen.',pl:'Koordynuje sale, przemieszczenia klas i punkty nadzoru w ciągu dnia.'},outcome:{en:'Optimized estate logic.',no:'Optimalisert bruk av byggmassen.',pl:'Zoptymalizowana logika obiektów.'}},
+  {id:'ops-4',symbol:'So',name:{en:'Schedule Optimiser',no:'Timeplan-optimaliserer',pl:'Optymalizator Harmonogramu'},domainId:'ops',maturity:'Strategic',description:{en:'Compares timetable options and recommends the least disruptive arrangement.',no:'Sammenligner og anbefaler den beste timeplanløsningen.',pl:'Porównuje opcje planu lekcji i rekomenduje układ powodujący najmniej zakłóceń.'},outcome:{en:'Student-centered schedules.',no:'Elevsentrerte timeplaner.',pl:'Harmonogramy skoncentrowane na uczniu.'}},
+  {id:'ops-5',symbol:'Ss',name:{en:'Shared Services Planner',no:'Planlegger for felles tjenester',pl:'Planista Usług Wspólnych'},domainId:'ops',maturity:'School-wide',description:{en:'Coordinates events, staffing, and room use across multiple schools.',no:'Koordinerer arrangementer på tvers av skoler.',pl:'Koordynuje wydarzenia, staffing i wykorzystanie sal w wielu szkołach.'},outcome:{en:'Shared resource efficiency.',no:'Effektiv ressursbruk på tvers.',pl:'Współdzielona efektywność zasobów.'}},
+  {id:'ops-6',symbol:'Oc',name:{en:'Operations Control Agent',no:'Operasjonssentral',pl:'Agent Kontroli Operacyjnej'},domainId:'ops',maturity:'Independent',description:{en:'Monitors daily operations, flags conflicts, and proposes adjustments in real time.',no:'Overvåker driften og foreslår justeringer i sanntid.',pl:'Monitoruje codzienne operacje, sygnalizuje konflikty i proponuje korekty w czasie rzeczywistym.'},outcome:{en:'Self-correcting logistics.',no:'Selvkorrigerende logistikk.',pl:'Samokorygująca się logistyka.'}},
+  // Library
+  {id:'lib-1',symbol:'Rr',name:{en:'Reading Recommendation Agent',no:'Leseanbefalinger',pl:'Agent Rekomendacji Lektur'},domainId:'lib',maturity:'Advisory',description:{en:'Suggests books and articles by topic, level, and student interest.',no:'Anbefaler bøker basert på nivå og interesse.',pl:'Sugeruje książki i artykuły według tematu, poziomu i zainteresowań ucznia.'},outcome:{en:'Personalized literacies.',no:'Personlig tilpasset leseglede.',pl:'Spersonalizowana umiejętność czytania.'}},
+  {id:'lib-2',symbol:'Sl',name:{en:'Source List Builder',no:'Kildelistebygger',pl:'Budowniczy Listy Źródeł'},domainId:'lib',maturity:'Operational',description:{en:'Creates starter reading lists and research packs for classes.',no:'Lager kildelister og forskningspakker for klasser.',pl:'Tworzy wstępne listy lektur i pakiety badawcze dla klas.'},outcome:{en:'Vetted research baselines.',no:'Kvalitetssikret utgangspunkt for forskning.',pl:'Weryfikowane podstawy badawcze.'}},
+  {id:'lib-3',symbol:'Rs',name:{en:'Research Support Agent',no:'Forskningsstøtte-agent',pl:'Agent Wspierania Badań'},domainId:'lib',maturity:'Process',description:{en:'Guides students through note-taking, source selection, and citation steps.',no:'Veileder elever gjennom kildevalg og sitering.',pl:'Prowadzi uczniów przez robienie notatek, wybór źródeł i kroki cytowania.'},outcome:{en:'Robust academic integrity.',no:'God faglig integritet.',pl:'Solidna integralność akademicka.'}},
+  {id:'lib-4',symbol:'Rc',name:{en:'Resource Choice Advisor',no:'Ressursrådgiver',pl:'Doradca ds. Wyboru Zasobów'},domainId:'lib',maturity:'Strategic',description:{en:'Recommends the best format or source type for a topic or learning goal.',no:'Anbefaler beste format for et læringsmål.',pl:'Rekomenduje najlepszy format lub typ źródła dla tematu lub celu nauczania.'},outcome:{en:'Strategic media selection.',no:'Strategisk medievalg.',pl:'Strategiczny wybór mediów.'}},
+  {id:'lib-5',symbol:'Del',name:{en:'Resource Sharing Agent',no:'Delingsagent for ressurser',pl:'Agent Udostępniania Zasobów'},domainId:'lib',maturity:'School-wide',description:{en:'Surfaces high-quality resources used in other schools or departments.',no:'Viser ressurser fra andre skoler.',pl:'Wydobywa wysokiej jakości zasoby używane w innych szkołach lub działach.'},outcome:{en:'Open resource culture.',no:'Åpen delingskultur for ressurser.',pl:'Otwarta kultura zasobów.'}},
+  {id:'lib-6',symbol:'Ls',name:{en:'Library Support Agent',no:'Bibliotekstøtte-agent',pl:'Agent Wspierania Biblioteki'},domainId:'lib',maturity:'Independent',description:{en:'Responds to routine resource requests and prepares topic packs for staff review.',no:'Svarer på rutinehenvendelser om ressurser.',pl:'Odpowiada na rutynowe prośby o zasoby i przygotowuje pakiety tematyczne do przeglądu przez personel.'},outcome:{en:'Instant resource curation.',no:'Umiddelbar kuratering av ressurser.',pl:'Błyskawiczna kuratela zasobów.'}},
+  // Parent
+  {id:'parent-1',symbol:'Fu',name:{en:'Family Update Summarizer',no:'Hjem-skole-sammendrag',pl:'Syntezator Aktualizacji dla Rodziców'},domainId:'parent',maturity:'Advisory',description:{en:'Condenses school news into short, clear family-friendly updates.',no:'Forkorter skolenyheter til klare oppdateringer for familien.',pl:'Kondensuje wiadomości szkolne w krótkie, jasne aktualizacje przyjazne dla rodzin.'},outcome:{en:'High-clarity family bond.',no:'Tydelig kommunikasjon med familien.',pl:'Przejrzysta więź z rodziną.'}},
+  {id:'parent-2',symbol:'Tm',name:{en:'Translation and Message Draft Agent',no:'Oversettelse og melding',pl:'Agent Tłumaczeń i Szkicowania Wiadomości'},domainId:'parent',maturity:'Operational',description:{en:'Creates translated notices and polished parent emails.',no:'Lager oversatte varsler og e-poster til foreldre.',pl:'Tworzy przetłumaczone ogłoszenia i dopracowane e-maile do rodziców.'},outcome:{en:'Inclusive home outreach.',no:'Inkluderende kontakt med hjemmet.',pl:'Inkluzywne docieranie do domów.'}},
+  {id:'parent-3',symbol:'Cc',name:{en:'Communication Calendar Agent',no:'Kommunikasjonskalender',pl:'Agent Kalendarza Komunikacji'},domainId:'parent',maturity:'Process',description:{en:'Schedules newsletters, event reminders, and reporting windows.',no:'Planlegger nyhetsbrev og påminnelser.',pl:'Planuje biuletyny, przypomnienia o wydarzeniach i okna raportowania.'},outcome:{en:'Orderly family engagement.',no:'Ryddig engasjement fra foreldre.',pl:'Uporządkowane zaangażowanie rodzin.'}},
+  {id:'parent-4',symbol:'At',name:{en:'Audience Tailoring Agent',no:'Målgruppetilpasning',pl:'Agent Dostosowania do Odbiorców'},domainId:'parent',maturity:'Strategic',description:{en:'Chooses the best tone, format, and detail level for different parent groups.',no:'Velger beste tone og format for ulike foreldregrupper.',pl:'Wybiera najlepszy ton, format i poziom szczegółowości dla różnych grup rodziców.'},outcome:{en:'Strategic parent comms.',no:'Strategisk foreldrekommunikasjon.',pl:'Strategiczna komunikacja z rodzicami.'}},
+  {id:'parent-5',symbol:'Cb',name:{en:'Community Broadcast Agent',no:'Fellesutsending',pl:'Agent Emisji Społecznościowej'},domainId:'parent',maturity:'School-wide',description:{en:'Coordinates messages across several schools so families receive consistent information.',no:'Koordinerer meldinger på tvers av flere skoler.',pl:'Koordynuje wiadomości w kilku szkołach, aby rodziny otrzymywały spójne informacje.'},outcome:{en:'Unified district voice.',no:'Felles stemme for hele distriktet.',pl:'Zunifikowany głos dystryktu.'}},
+  {id:'parent-6',symbol:'Hc',name:{en:'Home Communication Agent',no:'Privat hjem-kommunikasjon',pl:'Agent Komunikacji Domowej'},domainId:'parent',maturity:'Independent',description:{en:'Manages routine updates, drafts replies, and escalates sensitive messages to staff.',no:'Håndterer faste oppdateringer og skriver svarutkast.',pl:'Zarządza rutynowymi aktualizacjami, przygotowuje szkice odpowiedzi i eskaluje wrażliwe wiadomości do personelu.'},outcome:{en:'Autopilot home relations.',no:'Automatisert foreldrekontakt.',pl:'Relacje z domem na autopilocie.'}},
+  // HR
+  {id:'hr-1',symbol:'Cs',name:{en:'CPD Needs Scanner',no:'Kartlegging av kursbehov',pl:'Skaner Potrzeb CPD'},domainId:'hr',maturity:'Advisory',description:{en:'Identifies staff development themes from surveys, appraisal notes, and usage data.',no:'Finner tema for personalutvikling fra undersøkelser.',pl:'Identyfikuje tematy rozwoju pracowników na podstawie ankiet, notatek z oceny i danych dotyczących użytkowania.'},outcome:{en:'Data-driven training focus.',no:'Datadrevet fokus på kursing.',pl:'Fokus na szkolenia oparty na danych.'}},
+  {id:'hr-2',symbol:'Ob',name:{en:'Onboarding Pack Builder',no:'Bygger for nyansatte',pl:'Budowniczy Pakietu Wdrożeniowego'},domainId:'hr',maturity:'Operational',description:{en:'Creates induction packs, checklists, and welcome schedules for new staff.',no:'Lager velkomstpakker og sjekklister for nyansatte.',pl:'Tworzy pakiety wprowadzające, listy kontrolne i harmonogramy powitalne dla nowego personelu.'},outcome:{en:'Standardized entry success.',no:'Standardisert og god oppstart.',pl:'Standaryzowany sukces wejścia.'}},
+  {id:'hr-3',symbol:'Tp',name:{en:'Training Pathway Planner',no:'Læringsløp-planlegger',pl:'Planista Ścieżki Szkoleniowej'},domainId:'hr',maturity:'Process',description:{en:'Maps a professional learning pathway based on role, goals, and evidence of need.',no:'Lager et faglig læringsløp basert på rolle.',pl:'Mapuje profesjonalną ścieżkę uczenia się w oparciu o rolę, cele i dowody potrzeb.'},outcome:{en:'Persistent educator growth.',no:'Kontinuerlig vekst for lærere.',pl:'Trwały wzrost kompetencji edukatorów.'}},
+  {id:'hr-4',symbol:'Cm',name:{en:'Coaching Match Advisor',no:'Coaching-matcher',pl:'Doradca ds. Dopasowania Coachingu'},domainId:'hr',maturity:'Strategic',description:{en:'Matches staff with mentors, coaches, or courses most likely to help.',no:'Matcher ansatte med mentorer eller kurs.',pl:'Dopasowuje personel do mentorów, coachów lub kursów, które najprawdopodobniej pomogą.'},outcome:{en:'Maximized career support.',no:'Maksimal karrierestøtte.',pl:'Zmaksymalizowane wsparcie kariery.'}},
+  {id:'hr-5',symbol:'Tn',name:{en:'Talent Network Agent',no:'Talentnettverk-agent',pl:'Agent Sieci Talentów'},domainId:'hr',maturity:'School-wide',description:{en:'Connects expertise, vacancies, and leadership opportunities across schools.',no:'Kobler ekspertise og ledige stillinger i nettverket.',pl:'Łączy wiedzę specjalistyczną, wolne etaty i możliwości przywódcze w różnych szkołach.'},outcome:{en:'Optimized talent mobility.',no:'Bedre flyt av talenter.',pl:'Zoptymalizowana mobilność talentów.'}},
+  {id:'hr-6',symbol:'Ha',name:{en:'HR Assistant Agent',no:'HR-assistent',pl:'Agent Asystent HR'},domainId:'hr',maturity:'Independent',description:{en:'Drafts routine HR documents, tracks deadlines, and supports onboarding workflows.',no:'Skriver HR-dokumenter og følger opp frister.',pl:'Sporządza rutynowe dokumenty HR, śledzi terminy i wspiera przepływy pracy wdrożeniowej.'},outcome:{en:'Frictionless staff admin.',no:'Problemfri personaladministrasjon.',pl:'Bezproblemowa administracja personelem.'}},
+  // ICT
+  {id:'ict-1',symbol:'Th',name:{en:'Tech Help Finder',no:'IT-hjelp',pl:'Wyszukiwarka Pomocy Technicznej'},domainId:'ict',maturity:'Advisory',description:{en:'Explains digital tools, logins, and common platform questions in plain language.',no:'Forklarer verktøy og pålogging på et lettfattelig språk.',pl:'Wyjaśnia narzędzia cyfrowe, logowanie i typowe pytania dotyczące platform prostym językiem.'},outcome:{en:'Self-service user confidence.',no:'Selvhjulpenhet for brukerne.',pl:'Pewność użytkownika w zakresie samoobsługi.'}},
+  {id:'ict-2',symbol:'Ht',name:{en:'Helpdesk Triage Agent',no:'Brukerstøtte-vurdering',pl:'Agent Triażu Helpdesk'},domainId:'ict',maturity:'Operational',description:{en:'Sorts tickets, suggests fixes, and routes issues to the right team.',no:'Sorterer saker og foreslår løsninger.',pl:'Sortuje zgłoszenia, sugeruje poprawki i kieruje problemy do odpowiedniego zespołu.'},outcome:{en:'Rapid support routing.',no:'Rask ruting av brukerstøtte.',pl:'Szybkie kierowanie wsparciem.'}},
+  {id:'ict-3',symbol:'Dl',name:{en:'Digital Lesson Setup Agent',no:'Oppsett for digitale timer',pl:'Agent Konfiguracji Lekcji Cyfrowych'},domainId:'ict',maturity:'Process',description:{en:'Sets up class spaces, links, permissions, and learning activities.',no:'Setter opp klasserom, lenker og tilganger.',pl:'Konfiguruje przestrzenie klasowe, linki, uprawnienia i działania edukacyjne.'},outcome:{en:'Standardized digital environments.',no:'Standardisert digitalt miljø.',pl:'Standaryzowane środowiska cyfrowe.'}},
+  {id:'ict-4',symbol:'Ts',name:{en:'Tool Selection Advisor',no:'Verktøyvelger',pl:'Doradca ds. Wyboru Narzędzi'},domainId:'ict',maturity:'Strategic',description:{en:'Recommends the best app or platform for a teaching task or workflow.',no:'Anbefaler beste app for en undervisningsoppgave.',pl:'Rekomenduje najlepszą aplikację lub platformę do zadania dydaktycznego lub przepływu pracy.'},outcome:{en:'Right-tool pedagogy.',no:'Riktig verktøy til jobben.',pl:'Pedagogika właściwego narzędzia.'}},
+  {id:'ict-5',symbol:'Dp',name:{en:'Digital Practice Share Agent',no:'Delingsagent for digital praksis',pl:'Agent Udostępniania Praktyk Cyfrowych'},domainId:'ict',maturity:'School-wide',description:{en:'Shares effective digital routines and templates across the school network.',no:'Deler gode digitale rutiner i nettverket.',pl:'Udostępnia skuteczne rutyny i szablony cyfrowe w sieci szkół.'},outcome:{en:'Leveled-up digital literacy.',no:'Hevet digital kompetanse.',pl:'Podniesiona biegłość cyfrowa.'}},
+  {id:'ict-6',symbol:'Ds',name:{en:'Digital Support Agent',no:'Digital støtte-agent',pl:'Agent Wspierania Cyfrowego'},domainId:'ict',maturity:'Independent',description:{en:'Handles routine support requests, resets, and setup tasks while escalating edge cases.',no:'Håndterer enkle IT-saker og passordbytter.',pl:'Obsługuje rutynowe prośby o wsparcie, resetowanie i zadania konfiguracyjne, eskalując przypadki nietypowe.'},outcome:{en:'Autonomous technical rails.',no:'Autonom teknisk grunnmur.',pl:'Autonomiczne fundamenty techniczne.'}},
+  // Finance
+  {id:'fin-1',symbol:'Bs',name:{en:'Budget Snapshot Agent',no:'Budsjett-øyeblikksbilde',pl:'Agent Migawki Budżetowej'},domainId:'fin',maturity:'Advisory',description:{en:'Explains spending patterns, budget headroom, and upcoming pressures.',no:'Forklarer forbruksmønstre og kommende økonomiske behov.',pl:'Wyjaśnia wzorce wydatków, rezerwę budżetową i nadchodzące obciążenia.'},outcome:{en:'Unified financial awareness.',no:'Felles økonomisk forståelse.',pl:'Zunifikowana świadomość finansowa.'}},
+  {id:'fin-2',symbol:'Pr',name:{en:'Purchase Request Draft Agent',no:'Innkjøpsutkast',pl:'Agent Szkicowania Wniosków Zakupowych'},domainId:'fin',maturity:'Operational',description:{en:'Creates purchase forms, quote comparisons, and approval notes.',no:'Lager innkjøpsskjemaer og sammenligner tilbud.',pl:'Tworzy formularze zakupu, porównania ofert i notatki do zatwierdzenia.'},outcome:{en:'Compliant purchasing speed.',no:'Raskt og forskriftsmessig innkjøp.',pl:'Szybkość zakupów zgodna z przepisami.'}},
+  {id:'fin-3',symbol:'St',name:{en:'Spend Tracking Agent',no:'Forbrukssporer',pl:'Agent Śledzenia Wydatków'},domainId:'fin',maturity:'Process',description:{en:'Follows purchase requests through approval, ordering, and receipt steps.',no:'Følger innkjøp gjennom godkjenning og bestilling.',pl:'Śledzi wnioski zakupowe na etapach zatwierdzania, zamawiania i odbioru.'},outcome:{en:'Locked-down spend audit.',no:'Låst oversikt over forbruk.',pl:'Zabezpieczony audyt wydatków.'}},
+  {id:'fin-4',symbol:'Vm',name:{en:'Value-for-Money Advisor',no:'Rådgiver for innkjøp',pl:'Doradca ds. Wartości za Pieniądze'},domainId:'fin',maturity:'Strategic',description:{en:'Compares suppliers and recommends the most cost-effective option.',no:'Sammenligner leverandører og anbefaler beste valg.',pl:'Porównuje dostawców i rekomenduje najbardziej efektywną kosztowo opcję.'},outcome:{en:'Optimized resource spend.',no:'Optimalisert bruk av midler.',pl:'Zoptymalizowane wydatki na zasoby.'}},
+  {id:'fin-5',symbol:'Sb',name:{en:'Shared Buying Agent',no:'Fellesinnkjøp',pl:'Agent Wspólnych Zakupów'},domainId:'fin',maturity:'School-wide',description:{en:'Identifies common purchases that can be combined across schools for better value.',no:'Finner felles innkjøp som kan gjøres i nettverket.',pl:'Identyfikuje wspólne zakupy, które można połączyć w różnych szkołach dla uzyskania lepszej wartości.'},outcome:{en:'Collective buying power.',no:'Stordriftsfordeler ved innkjøp.',pl:'Zbiorowa siła nabywcza.'}},
+  {id:'fin-6',symbol:'Fa',name:{en:'Finance Admin Agent',no:'Økonomi-assistent',pl:'Agent Administracji Finansowej'},domainId:'fin',maturity:'Independent',description:{en:'Monitors routine finance tasks, prepares summaries, and flags exceptions.',no:'Overvåker rutineoppgaver innen økonomi.',pl:'Monitoruje rutynowe zadania finansowe, przygotowuje podsumowania i sygnalizuje wyjątki.'},outcome:{en:'Automated finance integrity.',no:'Automatisert integritet i regnskap.',pl:'Zautomatyzowana integralność finansowa.'}},
+  // Safety
+  {id:'safe-1',symbol:'Ir',name:{en:'Issue Reporter Agent',no:'Feilmeldingsagent',pl:'Agent Raportowania Problemów'},domainId:'safe',maturity:'Advisory',description:{en:'Summarizes maintenance logs, safety checks, and fault patterns.',no:'Oppsummerer vedlikeholdslid og sikkerhetssjekker.',pl:'Podsumowuje logi konserwacyjne, kontrole bezpieczeństwa i wzorce usterek.'},outcome:{en:'Estate health visibility.',no:'Oversikt over bygningsmassen.',pl:'Widoczność stanu technicznego obiektów.'}},
+  {id:'safe-2',symbol:'Mt',name:{en:'Maintenance Ticket Agent',no:'Vedlikeholdssaker',pl:'Agent Zgłoszeń Konserwacyjnych'},domainId:'safe',maturity:'Operational',description:{en:'Creates work orders and routes them to the right contractor or staff member.',no:'Lager arbeidsordrer og ruter til rett person.',pl:'Tworzy zlecenia pracy i kieruje je do odpowiedniego wykonawcy lub członka personelu.'},outcome:{en:'Rapid infrastructure repair.',no:'Raskt vedlikehold av bygg.',pl:'Szybka naprawa infrastruktury.'}},
+  {id:'safe-3',symbol:'Ip',name:{en:'Inspection Planner',no:'Inspeksjonsplanlegger',pl:'Planista Inspekcji'},domainId:'safe',maturity:'Process',description:{en:'Schedules routine checks, follow-ups, and safety review tasks.',no:'Planlegger faste sjekker og sikkerhetsvurderinger.',pl:'Planuje rutynowe kontrole, działania następcze i zadania przeglądu bezpieczeństwa.'},outcome:{en:'Consistent safety audit.',no:'Konsekvente sikkerhetsmøter.',pl:'Spójny audyt bezpieczeństwa.'}},
+  {id:'safe-4',symbol:'Pr',name:{en:'Priority Repair Advisor',no:'Reparatur-prioritering',pl:'Doradca ds. Priorytetów Napraw'},domainId:'safe',maturity:'Strategic',description:{en:'Ranks jobs by urgency, risk, and impact on teaching.',no:'Rangerer oppgaver etter hast og risiko.',pl:'Ranguje prace według pilności, ryzyka i wpływu na nauczanie.'},outcome:{en:'Smarter site priorities.',no:'Smartere prioriteringer av bygg.',pl:'Inteligentniejsze priorytety obiektu.'}},
+  {id:'safe-5',symbol:'Eb',name:{en:'Estate Benchmark Agent',no:'Benchmark for eiendom',pl:'Agent Benchmarkingu Obiektów'},domainId:'safe',maturity:'School-wide',description:{en:'Compares building issues and energy use across schools in a group.',no:'Sammenligner energibruk og vedlikehold i gruppen.',pl:'Porównuje problemy z budynkami i zużycie energii w szkołach danej grupy.'},outcome:{en:'Strategic estate insight.',no:'Strategisk innsikt i eiendommer.',pl:'Strategiczny wgląd w stan obiektów.'}},
+  {id:'safe-6',symbol:'Fw',name:{en:'Facilities Watch Agent',no:'Driftsovervåker',pl:'Agent Nadzoru Obiektów'},domainId:'safe',maturity:'Independent',description:{en:'Monitors issue logs and alerts staff when repeated faults or risks appear.',no:'Overvåker logger og varsler ved gjentakende feil.',pl:'Monitoruje logi problemów i alarmuje personel, gdy pojawiają się powtarzające się usterki lub zagrożenia.'},outcome:{en:'Predictive safety guard.',no:'Forutseende sikkerhetsvern.',pl:'Predykcyjna ochrona bezpieczeństwa.'}},
+  // Partnerships
+  {id:'partner-1',symbol:'Pf',name:{en:'Partner Finder',no:'Partnersøker',pl:'Wyszukiwarka Partnerów'},domainId:'partner',maturity:'Advisory',description:{en:'Suggests local organisations, employers, and community groups relevant to school goals.',no:'Foreslår partnere som er relevante for skolens mål.',pl:'Sugeruje lokalne organizacje, pracodawców i grupy społecznościowe istotne dla celów szkoły.'},outcome:{en:'Relevant social capital.',no:'Relevant sosial kapital for skolen.',pl:'Istotny kapitał społeczny.'}},
+  {id:'partner-2',symbol:'Od',name:{en:'Outreach Draft Agent',no:'Samarbeidsinvitasjon',pl:'Agent Szkicowania Działań Zewnętrznych'},domainId:'partner',maturity:'Operational',description:{en:'Writes invitations, follow-up emails, and partnership proposals.',no:'Skriver invitasjoner og samarbeidsforslag.',pl:'Tworzy zaproszenia, e-maile uzupełniające i propozycje partnerstwa.'},outcome:{en:'Polished community face.',no:'Profesjonell profil utad.',pl:'Dopracowany wizerunek społecznościowy.'}},
+  {id:'partner-3',symbol:'Ec',name:{en:'Event Coordination Agent',no:'Arrangementskoordinator',pl:'Agent Koordynacji Wydarzeń'},domainId:'partner',maturity:'Process',description:{en:'Plans logistics, invitations, schedules, and attendee lists for events.',no:'Planlegger logistikk og gjestelister til arrangementer.',pl:'Planuje logistykę, zaproszenia, harmonogramy i listy uczestników wydarzeń.'},outcome:{en:'Frictionless public events.',no:'Knirkefritt samfunnssamarbeid.',pl:'Publiczne wydarzenia bez zakłóceń.'}},
+  {id:'partner-4',symbol:'Pa',name:{en:'Partnership Fit Advisor',no:'Vurdering av samarbeid',pl:'Doradca ds. Dopasowania Partnerstwa'},domainId:'partner',maturity:'Strategic',description:{en:'Recommends which external partners best match a project or priority.',no:'Anbefaler hvilke partnere som best matcher prosjekter.',pl:'Rekomenduje, którzy partnerzy zewnętrzni najlepiej pasują do projektu lub priorytetu.'},outcome:{en:'Strategic project matches.',no:'Strategiske prosjekt-matcher.',pl:'Strategiczne dopasowania projektowe.'}},
+  {id:'partner-5',symbol:'Cn',name:{en:'Community Network Agent',no:'Samfunnsnettverk-agent',pl:'Agent Sieci Społecznościowej'},domainId:'partner',maturity:'School-wide',description:{en:'Shares contacts, opportunities, and partnership examples across schools.',no:'Deler kontakter og muligheter i nettverket.',pl:'Udostępnia kontakty, możliwości i przykłady partnerstwa w różnych szkołach.'},outcome:{en:'Aggregated community reach.',no:'Aggregert samfunnskontakt.',pl:'Agregowany zasięg społecznościowy.'}},
+  {id:'partner-6',symbol:'Om',name:{en:'Outreach Manager Agent',no:'Manager for samarbeid',pl:'Agent Zarządzania Kontakty'},domainId:'partner',maturity:'Independent',description:{en:'Tracks partnership activity, sends reminders, and prepares follow-up actions.',no:'Følger med på samarbeidsaktivitet og sender påminnelser.',pl:'Śledzi aktywność partnerską, wysyła przypomnienia i przygotowuje działania uzupełniające.'},outcome:{en:'Sustainable social bridges.',no:'Bærekraftige broer til lokalsamfunnet.',pl:'Zrównoważone mosty społeczne.'}}
+];
+
+const TRANSLATIONS = {
+  en: {
+    title:'Periodic Table of AI Agents K-12',
+    intelligenceDomains:'Intelligence Domains',
+    clearFilters:'Clear Filters',
+    maturityScale:'Maturity Scale',
+    description:'Description',
+    outcome:'Primary Outcome',
+    maturity:'Maturity',
+    locale:'Locale',
+    maturity_Advisory:'Advisory',        maturity_Advisory_desc:'Answers questions and surfaces relevant information.',
+    maturity_Operational:'Operational',  maturity_Operational_desc:'Completes simple tasks from start to finish.',
+    maturity_Process:'Process',          maturity_Process_desc:'Manages multi-step workflows across systems.',
+    maturity_Strategic:'Strategic',      maturity_Strategic_desc:'Recommends options with evidence and context.',
+    maturity_Schoolwide:'School-Wide',   maturity_Schoolwide_desc:'Coordinates activity across teams, programs, or schools.',
+    maturity_Independent:'Independent',  maturity_Independent_desc:'Acts autonomously within defined guardrails.',
+  },
+  no: {
+    title:'Periodesystem for KI-agenter K-12',
+    intelligenceDomains:'Intelligensdomener',
+    clearFilters:'Tøm Filtre',
+    maturityScale:'Modenhetsskala', 
+    description:'Beskrivelse',
+    outcome:'Hovedresultat',
+    maturity:'Modenhet',
+    locale:'Lokasjon',
+    maturity_Advisory:'Rådgivende', maturity_Advisory_desc:'Svarer på spørsmål og henter frem relevant informasjon.',
+    maturity_Operational:'Operasjonell', maturity_Operational_desc:'Fullfører enkle oppgaver fra start til slutt.',
+    maturity_Process:'Prosess', maturity_Process_desc:'Håndterer arbeidsflyter med flere trinn på tvers av systemer.',
+    maturity_Strategic:'Strategisk', maturity_Strategic_desc:'Anbefaler alternativer basert på bevis og kontekst.',
+    maturity_Schoolwide:'Hele Skolen', maturity_Schoolwide_desc:'Koordinerer aktiviteter på tvers av team, programmer eller skoler.',
+    maturity_Independent:'Selvstendig', maturity_Independent_desc:'Handler autonomt innenfor definerte rammer.',
+  },
+  pl: {
+    title:'Układ Okresowy Agentów AI K-12',
+    intelligenceDomains:'Domeny Inteligencji',
+    clearFilters:'Wyczyść Filtry',
+    maturityScale:'Skala Dojrzałości',
+    description:'Opis',
+    outcome:'Główny Wynik',
+    maturity:'Dojrzałość',
+    locale:'Lokalizacja',
+    maturity_Advisory:'Doradczy', maturity_Advisory_desc:'Odpowiada na pytania i wydobywa istotne informacje.',
+    maturity_Operational:'Operacyjny', maturity_Operational_desc:'Wykonuje proste zadania od początku do końca.',
+    maturity_Process:'Procesowy', maturity_Process_desc:'Zarządza wieloetapowymi przepływami pracy w różnych systemach.',
+    maturity_Strategic:'Strategiczny', maturity_Strategic_desc:'Rekomenduje opcje wraz z dowodami i kontekstem.',
+    maturity_Schoolwide:'Ogólnoszkolny', maturity_Schoolwide_desc:'Koordynuje działania zespołów, programów lub szkół.',
+    maturity_Independent:'Niezależny', maturity_Independent_desc:'Działa autonomicznie w ramach zdefiniowanych barier.',
+  }
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let lang = 'en';
+let theme = 'dark';
+let activeDomain = null;
+let selectedAgentId = null;
+
+function t(key) { return TRANSLATIONS[lang][key] || key; }
+
+// ══════════════════════════════════════════════
+// THEME & LANG
+// ══════════════════════════════════════════════
+function toggleTheme() {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.className = theme;
+  const icon = document.getElementById('theme-icon');
+  const label = document.getElementById('theme-label');
+  if (theme === 'dark') {
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+    if (label) label.textContent = 'Dark';
+  } else {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    if (label) label.textContent = 'Light';
+  }
+}
+
+function toggleLang() {
+  const langs = ['en','no','pl'];
+  lang = langs[(langs.indexOf(lang) + 1) % langs.length];
+  document.getElementById('lang-label').textContent = langs[(langs.indexOf(lang) + 1) % langs.length].toUpperCase();
+  updateI18n();
+  renderSidebar();
+  renderGrid();
+}
+
+function updateI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+}
+
+// ══════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════
+function renderSidebar() {
+  // Domain filters
+  const df = document.getElementById('domain-filters');
+  df.innerHTML = DOMAINS.map(d => `
+    <button class="domain-filter-btn ${activeDomain === d.id ? 'active' : ''}" onclick="toggleDomain('${d.id}')">
+      <div class="domain-dot ${d.color}"></div>
+      <span class="domain-name">${d.name[lang]}</span>
+    </button>
+  `).join('');
+
+  // Maturity legend
+  const ml = document.getElementById('maturity-legend');
+  const keys = ['Advisory','Operational','Process','Strategic','Schoolwide','Independent'];
+  ml.innerHTML = keys.map(k => `
+    <div class="maturity-item">
+      <div class="maturity-name">${t('maturity_' + k)}</div>
+      <div class="maturity-desc">${t('maturity_' + k + '_desc')}</div>
+    </div>
+  `).join('');
+}
+
+function toggleDomain(id) {
+  activeDomain = activeDomain === id ? null : id;
+  document.getElementById('clear-filter-wrap').style.display = activeDomain ? 'block' : 'none';
+  renderSidebar();
+  renderGrid();
+}
+
+function clearFilter() {
+  activeDomain = null;
+  document.getElementById('clear-filter-wrap').style.display = 'none';
+  renderSidebar();
+  renderGrid();
+}
+
+// ══════════════════════════════════════════════
+// GRID
+// ══════════════════════════════════════════════
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = DOMAINS.map(domain => {
+    const agents = AGENTS.filter(a => a.domainId === domain.id)
+      .sort((a,b) => MATURITY_LEVELS.indexOf(a.maturity) - MATURITY_LEVELS.indexOf(b.maturity));
+
+    return `<div class="domain-col">
+      <div class="domain-header">${domain.name[lang]}</div>
+      ${agents.map(agent => {
+        const isBlurred = activeDomain && agent.domainId !== activeDomain;
+        const isSelected = selectedAgentId === agent.id;
+        const isCore = agent.isCoreSystem;
+        const isTrust = agent.isTrustLayer;
+        const cls = [
+          'agent-cell',
+          isBlurred ? 'blurred' : '',
+          isSelected ? 'selected' : '',
+          isCore ? 'core' : '',
+          isTrust ? 'trust' : ''
+        ].filter(Boolean).join(' ');
+        return `<div class="${cls}" onclick="selectAgent('${agent.id}')" title="${agent.name[lang]}">
+          ${!isCore && !isTrust ? `<div class="cell-bar ${domain.color}"></div>` : ''}
+          ${isCore ? '<div class="cell-pulse"></div>' : '<div></div>'}
+          <div class="cell-bottom">
+            <div class="cell-symbol">${agent.symbol}</div>
+            <div class="cell-name">${agent.name[lang]}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// DETAILS PANEL
+// ══════════════════════════════════════════════
+function selectAgent(id) {
+  if (selectedAgentId === id) { closePanel(); return; }
+  selectedAgentId = id;
+  const agent = AGENTS.find(a => a.id === id);
+  const domain = DOMAINS.find(d => d.id === agent.domainId);
+
+  // Update panel
+  const icon = document.getElementById('panel-icon');
+  icon.textContent = agent.symbol;
+  icon.className = 'panel-icon ' + domain.color;
+
+  const dLabel = document.getElementById('panel-domain');
+  dLabel.textContent = domain.name[lang];
+  dLabel.className = 'panel-domain t-' + domain.color.replace('c-','');
+
+  document.getElementById('panel-name').textContent = agent.name[lang];
+  document.getElementById('panel-description').textContent = '"' + agent.description[lang] + '"';
+  document.getElementById('panel-outcome').textContent = agent.outcome[lang];
+
+  const matKey = 'maturity_' + agent.maturity.replace('-','').replace(' ','');
+  document.getElementById('panel-maturity').textContent = t(matKey);
+
+  const localeWrap = document.getElementById('panel-locale-wrap');
+  if (agent.norwegianContext) {
+    localeWrap.style.display = 'block';
+    document.getElementById('panel-locale').textContent = agent.norwegianContext[lang];
+  } else {
+    localeWrap.style.display = 'none';
+  }
+
+  document.getElementById('overlay').classList.add('visible');
+  document.getElementById('details-panel').classList.add('visible');
+
+  // Re-render grid to show selected state
+  renderGrid();
+}
+
+function closePanel() {
+  selectedAgentId = null;
+  document.getElementById('overlay').classList.remove('visible');
+  document.getElementById('details-panel').classList.remove('visible');
+  renderGrid();
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePanel();
+});
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+renderSidebar();
+renderGrid();
+updateI18n();
+</script>
+</body>
+</html>
